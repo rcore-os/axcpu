@@ -1,0 +1,48 @@
+[package]
+name = "axcpu"
+version = "0.1.0"
+edition = "2021"
+authors = [
+    "Yuekai Jia <equation618@gmail.com>",
+    "yfblock <321353225@qq.com>",
+    "Youjie Zheng <Azure_stars@126.com>",
+    "yanjuguang <coolyanjg@163.com>",
+    "Su Mingxian <aarkegz@gmail.com>",
+    "hky1999 <keyang.hu@qq.com>",
+    "RobertYuan <634954435@qq.com>",
+]
+description = "Privileged instruction and structure abstractions for various CPU architectures"
+license = "GPL-3.0-or-later OR Apache-2.0 OR MulanPSL-2.0"
+homepage = "https://github.com/arceos-org/axcpu"
+repository = "https://github.com/arceos-org/axcpu"
+documentation = "https://docs.rs/axcpu"
+keywords = ["arceos", "hal", "hardware-abstraction-layer", "x86_64", "aarch64", "riscv", "loongarch"]
+categories = ["embedded", "no-std", "hardware-support", "os"]
+
+[features]
+default = []
+fp_simd = []
+tls = []
+uspace = []
+
+[dependencies]
+linkme = "0.3"
+log = "=0.4.21"
+cfg-if = "1.0"
+memory_addr = "0.3"
+page_table_entry = "0.5"
+static_assertions = "1.1.0"
+
+[target.'cfg(target_arch = "x86_64")'.dependencies]
+x86 = "0.52"
+x86_64 = "0.15.2"
+
+[target.'cfg(target_arch = "aarch64")'.dependencies]
+aarch64-cpu = "10.0"
+tock-registers = "0.9"
+
+[target.'cfg(any(target_arch = "riscv32", target_arch = "riscv64"))'.dependencies]
+riscv = "0.13"
+
+[lints.clippy]
+new_without_default = "allow"
