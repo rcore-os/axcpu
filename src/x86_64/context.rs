@@ -1,5 +1,6 @@
 use core::{arch::naked_asm, fmt};
 use memory_addr::VirtAddr;
+
 /// Saved registers when a trap (interrupt or exception) occurs.
 #[allow(missing_docs)]
 #[repr(C)]
@@ -84,13 +85,12 @@ impl UspaceContext {
     /// Creates a new context with the given entry point, user stack pointer,
     /// and the argument.
     pub fn new(entry: usize, ustack_top: VirtAddr, arg0: usize) -> Self {
-        use crate::arch::GdtStruct;
+        use crate::GdtStruct;
         use x86_64::registers::rflags::RFlags;
         Self(TrapFrame {
             rdi: arg0 as _,
             rip: entry as _,
             cs: GdtStruct::UCODE64_SELECTOR.0 as _,
-            #[cfg(feature = "irq")]
             rflags: RFlags::INTERRUPT_FLAG.bits(), // IOPL = 0, IF = 1
             rsp: ustack_top.as_usize() as _,
             ss: GdtStruct::UDATA_SELECTOR.0 as _,
@@ -103,7 +103,7 @@ impl UspaceContext {
     /// It copies almost all registers except `CS` and `SS` which need to be
     /// set to the user segment selectors.
     pub const fn from(tf: &TrapFrame) -> Self {
-        use crate::arch::GdtStruct;
+        use crate::GdtStruct;
         let mut tf = *tf;
         tf.cs = GdtStruct::UCODE64_SELECTOR.0 as _;
         tf.ss = GdtStruct::UDATA_SELECTOR.0 as _;
@@ -146,8 +146,8 @@ impl UspaceContext {
     ///
     /// This function is unsafe because it changes processor mode and the stack.
     pub unsafe fn enter_uspace(&self, kstack_top: VirtAddr) -> ! {
-        super::disable_irqs();
-        assert_eq!(super::tss_get_rsp0(), kstack_top);
+        crate::disable_irqs();
+        assert_eq!(super::gdt::tss_rsp0(), kstack_top);
         unsafe {
             core::arch::asm!("
                 mov     rsp, {tf}
@@ -292,13 +292,13 @@ impl TaskContext {
     ///
     /// [`init`]: TaskContext::init
     /// [`switch_to`]: TaskContext::switch_to
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             kstack_top: va!(0),
             rsp: 0,
             fs_base: 0,
             #[cfg(feature = "uspace")]
-            cr3: crate::paging::kernel_page_table_root(),
+            cr3: pa!(0), // TODO
             #[cfg(feature = "fp_simd")]
             ext_state: ExtendedState::default(),
             #[cfg(feature = "uspace")]
@@ -315,22 +315,23 @@ impl TaskContext {
             // is executed), (stack pointer + 8) should be 16-byte aligned.
             let frame_ptr = (kstack_top.as_mut_ptr() as *mut u64).sub(1);
             let frame_ptr = (frame_ptr as *mut ContextSwitchFrame).sub(1);
-            core::ptr::write(frame_ptr, ContextSwitchFrame {
-                rip: entry as _,
-                ..Default::default()
-            });
+            core::ptr::write(
+                frame_ptr,
+                ContextSwitchFrame {
+                    rip: entry as _,
+                    ..Default::default()
+                },
+            );
             self.rsp = frame_ptr as u64;
         }
         self.kstack_top = kstack_top;
         self.fs_base = tls_area.as_usize();
     }
 
-    /// Changes the page table root (`CR3` register for x86_64).
+    /// Changes the page table root in this context.
     ///
-    /// If not set, the kernel page table root is used (obtained by
-    /// [`axhal::paging::kernel_page_table_root`][1]).
-    ///
-    /// [1]: crate::paging::kernel_page_table_root
+    /// The hardware register for page table root (`CR3` for x86) will be
+    /// updated to the next task's after [`Self::switch_to`].
     #[cfg(feature = "uspace")]
     pub fn set_page_table_root(&mut self, cr3: memory_addr::PhysAddr) {
         self.cr3 = cr3;
@@ -348,17 +349,17 @@ impl TaskContext {
         }
         #[cfg(any(feature = "tls", feature = "uspace"))]
         unsafe {
-            self.fs_base = super::read_thread_pointer();
-            super::write_thread_pointer(next_ctx.fs_base);
+            self.fs_base = crate::read_thread_pointer();
+            crate::write_thread_pointer(next_ctx.fs_base);
         }
         #[cfg(feature = "uspace")]
         unsafe {
             // Switch gs base for user space.
             self.gs_base = x86::msr::rdmsr(x86::msr::IA32_KERNEL_GSBASE) as usize;
             x86::msr::wrmsr(x86::msr::IA32_KERNEL_GSBASE, next_ctx.gs_base as u64);
-            super::tss_set_rsp0(next_ctx.kstack_top);
+            super::gdt::set_tss_rsp0(next_ctx.kstack_top);
             if next_ctx.cr3 != self.cr3 {
-                super::write_page_table_root(next_ctx.cr3);
+                crate::write_page_table_root(next_ctx.cr3);
             }
         }
         unsafe { context_switch(&mut self.rsp, &next_ctx.rsp) }

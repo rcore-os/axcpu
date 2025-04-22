@@ -210,8 +210,8 @@ pub struct TaskContext {
 
 impl TaskContext {
     /// Creates a new default context for a new task.
-    pub fn new() -> Self {
-        Default::default()
+    pub const fn new() -> Self {
+        unsafe { core::mem::MaybeUninit::zeroed().assume_init() }
     }
 
     /// Initializes the context for a new task, with the given entry point and
@@ -222,9 +222,10 @@ impl TaskContext {
         self.tp = tls_area.as_usize();
     }
 
-    /// Changes the page table root (`pgdl` register for loongarch64).
+    /// Changes the page table root in this context.
     ///
-    /// If not set, it means that this task is a kernel task and only `pgdh` register will be used.
+    /// The hardware register for user page table root (`pgdl` for loongarch64)
+    /// will be updated to the next task's after [`Self::switch_to`].
     #[cfg(feature = "uspace")]
     pub fn set_page_table_root(&mut self, pgdl: memory_addr::PhysAddr) {
         self.pgdl = pgdl.as_usize();

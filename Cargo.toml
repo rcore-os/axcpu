@@ -36,6 +36,8 @@ static_assertions = "1.1.0"
 [target.'cfg(target_arch = "x86_64")'.dependencies]
 x86 = "0.52"
 x86_64 = "0.15.2"
+percpu = "0.2"
+lazyinit = "0.2"
 
 [target.'cfg(target_arch = "aarch64")'.dependencies]
 aarch64-cpu = "10.0"
@@ -43,6 +45,9 @@ tock-registers = "0.9"
 
 [target.'cfg(any(target_arch = "riscv32", target_arch = "riscv64"))'.dependencies]
 riscv = "0.13"
+
+[target.'cfg(target_arch = "loongarch64")'.dependencies]
+loongArch64 = "0.2.4"
 
 [lints.clippy]
 new_without_default = "allow"

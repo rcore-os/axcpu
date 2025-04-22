@@ -15,8 +15,9 @@ use x86::{controlregs, msr, tlb};
 use x86_64::instructions::interrupts;
 
 pub use self::context::{ExtendedState, FxsaveArea, TaskContext, TrapFrame};
-pub use self::gdt::{GdtStruct, init_gdt, tss_get_rsp0, tss_set_rsp0};
-pub use self::idt::{IdtStruct, init_idt};
+pub use self::gdt::GdtStruct;
+pub use self::idt::IdtStruct;
+pub use x86_64::structures::tss::TaskStateSegment;
 
 #[cfg(feature = "uspace")]
 pub use self::{context::UspaceContext, syscall::init_syscall};
@@ -128,8 +129,8 @@ pub unsafe fn write_thread_pointer(fs_base: usize) {
 /// feature is enabled, it also initializes relevant model-specific registers
 /// to enable the `syscall` instruction.
 pub fn cpu_init() {
-    init_gdt();
-    init_idt();
+    self::gdt::init_gdt();
+    self::idt::init_idt();
     #[cfg(feature = "uspace")]
-    init_syscall();
+    self::syscall::init_syscall();
 }

@@ -2,10 +2,10 @@ use core::fmt;
 
 use lazyinit::LazyInit;
 use x86_64::instructions::tables::{lgdt, load_tss};
-use x86_64::registers::segmentation::{CS, Segment, SegmentSelector};
+use x86_64::registers::segmentation::{Segment, SegmentSelector, CS};
 use x86_64::structures::gdt::{Descriptor, DescriptorFlags};
-use x86_64::structures::{DescriptorTablePointer, tss::TaskStateSegment};
-use x86_64::{PrivilegeLevel, addr::VirtAddr};
+use x86_64::structures::{tss::TaskStateSegment, DescriptorTablePointer};
+use x86_64::{addr::VirtAddr, PrivilegeLevel};
 
 #[unsafe(no_mangle)]
 #[percpu::def_percpu]
@@ -111,7 +111,8 @@ pub fn init_gdt() {
 }
 
 /// Returns the stack pointer for privilege level 0 (RSP0) of the current TSS.
-pub fn tss_get_rsp0() -> memory_addr::VirtAddr {
+#[cfg(feature = "uspace")]
+pub fn tss_rsp0() -> memory_addr::VirtAddr {
     let tss = unsafe { TSS.current_ref_raw() };
     memory_addr::VirtAddr::from(tss.privilege_stack_table[0].as_u64() as usize)
 }
@@ -121,7 +122,8 @@ pub fn tss_get_rsp0() -> memory_addr::VirtAddr {
 /// # Safety
 ///
 /// Must be called after initialization and preemption is disabled.
-pub unsafe fn tss_set_rsp0(rsp0: memory_addr::VirtAddr) {
+#[cfg(feature = "uspace")]
+pub unsafe fn set_tss_rsp0(rsp0: memory_addr::VirtAddr) {
     let tss = unsafe { TSS.current_ref_mut_raw() };
     tss.privilege_stack_table[0] = VirtAddr::new_truncate(rsp0.as_usize() as u64);
 }
