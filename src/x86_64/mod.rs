@@ -8,6 +8,9 @@ mod syscall;
 #[cfg(target_os = "none")]
 mod trap;
 
+#[cfg(feature = "uspace")]
+pub mod uspace;
+
 use core::arch::asm;
 
 use memory_addr::{MemoryAddr, PhysAddr, VirtAddr};
@@ -18,9 +21,6 @@ pub use self::context::{ExtendedState, FxsaveArea, TaskContext, TrapFrame};
 pub use self::gdt::GdtStruct;
 pub use self::idt::IdtStruct;
 pub use x86_64::structures::tss::TaskStateSegment;
-
-#[cfg(feature = "uspace")]
-pub use self::{context::UspaceContext, syscall::init_syscall};
 
 /// Allows the current CPU to respond to interrupts.
 #[inline]

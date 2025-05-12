@@ -4,14 +4,14 @@ mod macros;
 mod context;
 mod trap;
 
+#[cfg(feature = "uspace")]
+pub mod uspace;
+
 use core::arch::asm;
 use loongArch64::register::{crmd, ecfg, eentry, pgdh, pgdl};
 use memory_addr::{PhysAddr, VirtAddr};
 
 pub use self::context::{TaskContext, TrapFrame};
-
-#[cfg(feature = "uspace")]
-pub use self::context::UspaceContext;
 
 /// Allows the current CPU to respond to interrupts.
 #[inline]
@@ -86,7 +86,6 @@ pub unsafe fn write_page_table_root0(root_paddr: PhysAddr) {
 /// This function is unsafe as it changes the kernel virtual memory address space.
 /// NOTE: Compiler optimize inline on release mode, kernel raise error about
 /// page table. So we prohibit inline operation.
-#[inline(never)]
 pub unsafe fn write_page_table_root(root_paddr: PhysAddr) {
     let old_root = read_page_table_root();
     trace!("set page table root: {:#x} => {:#x}", old_root, root_paddr);
