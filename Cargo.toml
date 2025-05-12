@@ -1,6 +1,6 @@
 [package]
 name = "axcpu"
-version = "0.1.0"
+version = "0.1.0-pre.2"
 edition = "2021"
 authors = [
     "Yuekai Jia <equation618@gmail.com>",
@@ -16,8 +16,9 @@ license = "GPL-3.0-or-later OR Apache-2.0 OR MulanPSL-2.0"
 homepage = "https://github.com/arceos-org/axcpu"
 repository = "https://github.com/arceos-org/axcpu"
 documentation = "https://docs.rs/axcpu"
-keywords = ["arceos", "hal", "hardware-abstraction-layer", "x86_64", "aarch64", "riscv", "loongarch"]
+keywords = ["arceos", "cpu", "architecture", "hal"]
 categories = ["embedded", "no-std", "hardware-support", "os"]
+rust-version = "1.89.0"
 
 [features]
 default = []
@@ -51,3 +52,6 @@ loongArch64 = "0.2.4"
 
 [lints.clippy]
 new_without_default = "allow"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-none", "aarch64-unknown-none", "riscv64gc-unknown-none-elf", "loongarch64-unknown-none"]
