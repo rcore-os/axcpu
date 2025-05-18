@@ -158,14 +158,13 @@ impl TaskContext {
     pub fn switch_to(&mut self, next_ctx: &Self) {
         #[cfg(feature = "tls")]
         {
-            self.tp = super::read_thread_pointer();
-            unsafe { super::write_thread_pointer(next_ctx.tp) };
+            self.tp = crate::asm::read_thread_pointer();
+            unsafe { crate::asm::write_thread_pointer(next_ctx.tp) };
         }
         #[cfg(feature = "uspace")]
-        unsafe {
-            if self.satp != next_ctx.satp {
-                super::write_page_table_root(next_ctx.satp);
-            }
+        if self.satp != next_ctx.satp {
+            unsafe { crate::asm::write_user_page_table(next_ctx.satp) };
+            crate::asm::flush_tlb(None); // currently flush the entire TLB
         }
         unsafe {
             // TODO: switch FP states

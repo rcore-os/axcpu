@@ -112,7 +112,7 @@ pub fn init_gdt() {
 
 /// Returns the stack pointer for privilege level 0 (RSP0) of the current TSS.
 #[cfg(feature = "uspace")]
-pub fn tss_rsp0() -> memory_addr::VirtAddr {
+pub(crate) fn read_tss_rsp0() -> memory_addr::VirtAddr {
     let tss = unsafe { TSS.current_ref_raw() };
     memory_addr::VirtAddr::from(tss.privilege_stack_table[0].as_u64() as usize)
 }
@@ -123,7 +123,7 @@ pub fn tss_rsp0() -> memory_addr::VirtAddr {
 ///
 /// Must be called after initialization and preemption is disabled.
 #[cfg(feature = "uspace")]
-pub unsafe fn set_tss_rsp0(rsp0: memory_addr::VirtAddr) {
+pub(crate) unsafe fn write_tss_rsp0(rsp0: memory_addr::VirtAddr) {
     let tss = unsafe { TSS.current_ref_mut_raw() };
     tss.privilege_stack_table[0] = VirtAddr::new_truncate(rsp0.as_usize() as u64);
 }

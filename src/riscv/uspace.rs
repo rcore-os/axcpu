@@ -72,7 +72,7 @@ impl UspaceContext {
     pub unsafe fn enter_uspace(&self, kstack_top: VirtAddr) -> ! {
         use riscv::register::{sepc, sscratch};
 
-        super::disable_irqs();
+        crate::asm::disable_irqs();
         // Address of the top of the kernel stack after saving the trap frame.
         let kernel_trap_addr = kstack_top.as_usize() - core::mem::size_of::<TrapFrame>();
         unsafe {

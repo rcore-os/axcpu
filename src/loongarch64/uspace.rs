@@ -69,7 +69,7 @@ impl UspaceContext {
     pub unsafe fn enter_uspace(&self, kstack_top: VirtAddr) -> ! {
         use loongArch64::register::era;
 
-        super::disable_irqs();
+        crate::asm::disable_irqs();
         era::set_pc(self.get_ip());
 
         unsafe {

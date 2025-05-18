@@ -244,17 +244,18 @@ impl TaskContext {
         }
         #[cfg(any(feature = "tls", feature = "uspace"))]
         unsafe {
-            self.fs_base = crate::read_thread_pointer();
-            crate::write_thread_pointer(next_ctx.fs_base);
+            self.fs_base = crate::asm::read_thread_pointer();
+            crate::asm::write_thread_pointer(next_ctx.fs_base);
         }
         #[cfg(feature = "uspace")]
         unsafe {
             // Switch gs base for user space.
             self.gs_base = x86::msr::rdmsr(x86::msr::IA32_KERNEL_GSBASE) as usize;
             x86::msr::wrmsr(x86::msr::IA32_KERNEL_GSBASE, next_ctx.gs_base as u64);
-            super::gdt::set_tss_rsp0(next_ctx.kstack_top);
+            super::gdt::write_tss_rsp0(next_ctx.kstack_top);
             if next_ctx.cr3 != self.cr3 {
-                crate::write_page_table_root(next_ctx.cr3);
+                crate::asm::write_user_page_table(next_ctx.cr3);
+                // writing to CR3 has flushed the TLB
             }
         }
         unsafe { context_switch(&mut self.rsp, &next_ctx.rsp) }

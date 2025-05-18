@@ -77,8 +77,8 @@ impl UspaceContext {
     ///
     /// This function is unsafe because it changes processor mode and the stack.
     pub unsafe fn enter_uspace(&self, kstack_top: VirtAddr) -> ! {
-        crate::disable_irqs();
-        assert_eq!(super::gdt::tss_rsp0(), kstack_top);
+        crate::asm::disable_irqs();
+        assert_eq!(super::gdt::read_tss_rsp0(), kstack_top);
         unsafe {
             core::arch::asm!("
                 mov     rsp, {tf}

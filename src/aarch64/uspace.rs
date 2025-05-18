@@ -73,7 +73,7 @@ impl UspaceContext {
     ///
     /// This function is unsafe because it changes processor mode and the stack.
     pub unsafe fn enter_uspace(&self, kstack_top: VirtAddr) -> ! {
-        super::disable_irqs();
+        crate::asm::disable_irqs();
         // We do not handle traps that occur at the current exception level,
         // so the kstack ptr(`sp_el1`) will not change during running in user space.
         // Then we don't need to save the `sp_el1` to the taskctx.
