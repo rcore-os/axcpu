@@ -1,9 +1,10 @@
 use core::arch::naked_asm;
+use core::fmt;
 use memory_addr::VirtAddr;
 
 /// Saved registers when a trap (exception) occurs.
 #[repr(C)]
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Default, Clone, Copy)]
 pub struct TrapFrame {
     /// General-purpose registers (R0..R30).
     pub r: [u64; 31],
@@ -13,6 +14,20 @@ pub struct TrapFrame {
     pub elr: u64,
     /// Saved Process Status Register (SPSR_EL1).
     pub spsr: u64,
+}
+
+impl fmt::Debug for TrapFrame {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "TrapFrame: {{")?;
+        for (i, &reg) in self.r.iter().enumerate() {
+            writeln!(f, "    r{}: {:#x},", i, reg)?;
+        }
+        writeln!(f, "    usp: {:#x},", self.usp)?;
+        writeln!(f, "    elr: {:#x},", self.elr)?;
+        writeln!(f, "    spsr: {:#x},", self.spsr)?;
+        write!(f, "}}")?;
+        Ok(())
+    }
 }
 
 impl TrapFrame {

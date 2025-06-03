@@ -51,11 +51,11 @@ fn handle_instruction_abort(tf: &TrapFrame, iss: u64, is_user: bool) {
         || !handle_trap!(PAGE_FAULT, vaddr, access_flags, is_user)
     {
         panic!(
-            "Unhandled {} Instruction Abort @ {:#x}, fault_vaddr={:#x}, ISS={:#x} ({:?}):\n{:#x?}",
+            "Unhandled {} Instruction Abort @ {:#x}, fault_vaddr={:#x}, ESR={:#x} ({:?}):\n{:#x?}",
             if is_user { "EL0" } else { "EL1" },
             tf.elr,
             vaddr,
-            iss,
+            ESR_EL1.get(),
             access_flags,
             tf,
         );
@@ -80,11 +80,11 @@ fn handle_data_abort(tf: &TrapFrame, iss: u64, is_user: bool) {
         || !handle_trap!(PAGE_FAULT, vaddr, access_flags, is_user)
     {
         panic!(
-            "Unhandled {} Data Abort @ {:#x}, fault_vaddr={:#x}, ISS=0b{:08b} ({:?}):\n{:#x?}",
+            "Unhandled {} Data Abort @ {:#x}, fault_vaddr={:#x}, ESR={:#x} ({:?}):\n{:#x?}",
             if is_user { "EL0" } else { "EL1" },
             tf.elr,
             vaddr,
-            iss,
+            ESR_EL1.get(),
             access_flags,
             tf,
         );
