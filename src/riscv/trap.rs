@@ -53,8 +53,8 @@ fn riscv_trap_handler(tf: &mut TrapFrame, from_user: bool) {
                 handle_page_fault(tf, PageFaultFlags::EXECUTE, from_user)
             }
             Trap::Exception(E::Breakpoint) => handle_breakpoint(&mut tf.sepc),
-            Trap::Interrupt(int) => {
-                handle_trap!(IRQ, int as usize);
+            Trap::Interrupt(_) => {
+                handle_trap!(IRQ, scause.bits());
             }
             _ => {
                 panic!("Unhandled trap {:?} @ {:#x}:\n{:#x?}", cause, tf.sepc, tf);
